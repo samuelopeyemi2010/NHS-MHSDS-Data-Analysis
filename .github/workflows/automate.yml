@@ -1,50 +1,37 @@
-name: "MHSDS Dataset Monthly Refresh"  # workflow name displayed in GitHub UI
+name: MHSDS Dataset Monthly Refresh
 
 on:
   schedule:
-    - cron: '0 11 16 * *'  # Scheduled to automatically refresh 11am on the 16th of every monthly
-  workflow_dispatch:  # Lets you trigger manually via GitHub UI
+    - cron: '0 11 16 * *'  # Runs at 11:00 AM on the 16th of each month
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
 
 jobs:
-  data-update:  # Rename this to match your task (e.g. "scrape-property-data")
+  run-script:
     runs-on: ubuntu-latest
-    
-    steps:
-      # 1️⃣ Repository setup (rarely needs modification)
-      - uses: actions/checkout@v4  # Updated to latest version
-      
-      # 2️⃣ Python configuration (customise if needed)
-      - name: "Python configuration"
-        uses: actions/setup-python@v4  # Updated action
-        with:
-          python-version: '3.10'  # Update to your preferred version
-      
-      # 3️⃣ Python packages installation (customise as needed)
-      - name: "Install Python packages"
-        run: |
-          echo "Installing the required Python packages..."
-          pip install --upgrade pip
-          
-          pip install pytz python-dateutil beautifulsoup4 requests gitpython openpyxl
-          echo "Packages installed successfully!"
-      
-      # 4️⃣ Main execution 
-      - name: "Execute data scraper"
-        run: |
-          echo "Starting data collection process..."
-          
-          data scraper.py  
-          
-          echo "Data processing complete!"
-      
-      # 5️⃣ Commit changes (personalise these messages)
-      - name: "Save updates"
-        run: |
-          git config --global user.name "Opeyemi O.A"
-          git config --global user.email "sustainablethanks@protonmail.com"
-          
-          git add "NHS-MHSDS-Data-Analysis/"  
-          git commit -m "🔄 NHS England MHSDS Monthly Dataset Update | $(date +'%d-%m-%Y')"
-          git push
 
-          echo "Changes successfully committed!"
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run Python script
+      run: python mhsds_scraper.py
+
+    - name: Commit and Push Changes
+      run: |
+        git config user.name "Opeyemi O.Ajala"
+        git config user.email "positivemindset@tutamail.com"
+        git add mhsds_data
+        git commit -m "Monthly auto update NHS England MHSDS Dataset Update"
+        git push
+      env:
+        # This makes push work from GitHub-hosted runners
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
