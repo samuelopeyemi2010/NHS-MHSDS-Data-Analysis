@@ -1,10 +1,9 @@
-pandas
+pandas==2.2.3
 pytz 
 python-dateutil 
-beautifulsoup4 
-requests 
+beautifulsoup4==4.12.3
+requests==2.32.3 
 gitpython 
 openpyxl
 selenium 
 webdriver-manager
-zipfile
