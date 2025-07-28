@@ -39,20 +39,23 @@ jobs:
         python mhsds_scraper.py
         echo "✅ Script execution completed"
 
+    - name: Commit changes if present
+      run: |
+        if [[ -n $(git status --porcelain) ]]; then
+          git add .
+          git commit -m "🔁 Auto update: MHSDS data files"
+          git push
+        else
+          echo "No changes to commit"
+        fi
+
     - name: Commit and Push Changes
       run: |
-        git config --global user.name "Opeyemi O.Ajala"
-        git config --global user.email "positivemindset@tutamail.com"
-        
-        # Check for changes in specific directory
-        if git diff --quiet --exit-code -- mhsds_data/; then
-          echo "🔄 No changes detected in mhsds_data directory"
-        else
-          git add mhsds_data/
-          git commit -m "📊 Monthly MHSDS Dataset Update - $(date +'%Y-%m-%d')"
-          git pull --rebase  # Prevent merge conflicts
-          git push origin HEAD:main
-          echo "✅ Successfully updated dataset"
-        fi
+        git config user.name "Opeyemi O.Ajala"
+        git config user.email "positivemindset@tutamail.com"
+        git add mhsds_data
+        git commit -m "Monthly auto update NHS England MHSDS Dataset Update"
+        git push
       env:
+        # This makes push work from GitHub-hosted runners
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
