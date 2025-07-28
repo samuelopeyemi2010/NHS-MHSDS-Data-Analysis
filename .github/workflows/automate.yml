@@ -2,7 +2,7 @@ name: MHSDS Dataset Monthly Refresh
 
 on:
   schedule:
-    - cron: '0 11 16 * *'  # Runs at 11:00 AM on the 16th of each month
+    - cron: '0 11 16 * *'  # Runs at 11:00 AM UTC on the 16th of each month
   workflow_dispatch:  # Allows manual triggering from GitHub UI
 
 jobs:
@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Ensures full git history is available
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -23,21 +25,34 @@ jobs:
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
 
     - name: Run Python script
-      run: python mhsds_scraper.py
+      run: |
+        echo "🔄 Starting MHSDS data collection..."
+        python mhsds_scraper.py
+        echo "✅ Script execution completed"
 
     - name: Commit and Push Changes
       run: |
-        git config user.name "Opeyemi O.Ajala"
-        git config user.email "positivemindset@tutamail.com"
-        git add mhsds_data
-        git commit -m "Monthly auto update NHS England MHSDS Dataset Update"
-        git push
+        git config --global user.name "Opeyemi O.Ajala"
+        git config --global user.email "positivemindset@tutamail.com"
+        
+        # Check for changes in specific directory
+        if git diff --quiet --exit-code -- mhsds_data/; then
+          echo "🔄 No changes detected in mhsds_data directory"
+        else
+          git add mhsds_data/
+          git commit -m "📊 Monthly MHSDS Dataset Update - $(date +'%Y-%m-%d')"
+          git pull --rebase  # Prevent merge conflicts
+          git push origin HEAD:main
+          echo "✅ Successfully updated dataset"
+        fi
       env:
-        # This makes push work from GitHub-hosted runners
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
